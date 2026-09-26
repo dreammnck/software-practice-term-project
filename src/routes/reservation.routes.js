@@ -7,7 +7,7 @@ const { authenticate } = require('../middleware/auth.middleware');
 const router = express.Router();
 
 const reservationBodyRules = [
-  body('restaurantId').isMongoId().withMessage('restaurantId must be a valid id'),
+  body('restaurantId').isInt({ min: 1 }).withMessage('restaurantId must be a valid id'),
   body('date').isISO8601().withMessage('date must be a valid date (YYYY-MM-DD)'),
   body('numberOfTables')
     .isInt({ min: 1, max: 3 })
@@ -15,7 +15,7 @@ const reservationBodyRules = [
 ];
 
 const reservationUpdateRules = [
-  body('restaurantId').optional().isMongoId().withMessage('restaurantId must be a valid id'),
+  body('restaurantId').optional().isInt({ min: 1 }).withMessage('restaurantId must be a valid id'),
   body('date').optional().isISO8601().withMessage('date must be a valid date (YYYY-MM-DD)'),
   body('numberOfTables')
     .optional()
@@ -38,7 +38,7 @@ const reservationUpdateRules = [
  *             type: object
  *             required: [restaurantId, date, numberOfTables]
  *             properties:
- *               restaurantId: { type: string }
+ *               restaurantId: { type: integer }
  *               date: { type: string, format: date }
  *               numberOfTables: { type: integer, minimum: 1, maximum: 3 }
  *     responses:
@@ -64,7 +64,7 @@ router.get('/', authenticate, reservationController.list);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: integer }
  *     responses:
  *       200: { description: Reservation found }
  *       403: { description: Forbidden }
@@ -77,14 +77,14 @@ router.get('/', authenticate, reservationController.list);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: integer }
  *     requestBody:
  *       content:
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               restaurantId: { type: string }
+ *               restaurantId: { type: integer }
  *               date: { type: string, format: date }
  *               numberOfTables: { type: integer, minimum: 1, maximum: 3 }
  *     responses:
@@ -97,7 +97,7 @@ router.get('/', authenticate, reservationController.list);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: integer }
  *     responses:
  *       200: { description: Reservation deleted }
  */

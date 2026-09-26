@@ -1,17 +1,14 @@
 require('dotenv').config();
-const { mongoose, connect, User, Restaurant, Reservation, RevokedToken } = require('../models');
+const { sequelize } = require('../models');
 
 async function sync() {
   try {
-    await connect();
-    await Promise.all(
-      [User, Restaurant, Reservation, RevokedToken].map((m) => m.syncIndexes())
-    );
-    console.log('Indexes synced.');
+    await sequelize.sync({ alter: true });
+    console.log('Database schema synced.');
   } catch (err) {
-    console.error('Failed to sync indexes:', err);
+    console.error('Failed to sync database:', err);
   } finally {
-    await mongoose.disconnect();
+    await sequelize.close();
   }
 }
 

@@ -27,7 +27,7 @@ router.get('/', authenticate, restaurantController.list);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema: { type: integer }
  *     responses:
  *       200: { description: Restaurant found }
  *       404: { description: Restaurant not found }

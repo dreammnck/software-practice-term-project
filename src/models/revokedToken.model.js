@@ -1,12 +1,25 @@
-const { Schema, model } = require('mongoose');
+const { DataTypes, Model } = require('sequelize');
+const sequelize = require('../config/db');
 
-const revokedTokenSchema = new Schema(
+class RevokedToken extends Model {}
+
+RevokedToken.init(
   {
-    jti: { type: String, required: true, unique: true },
-    // TTL index: MongoDB automatically deletes the document once expiresAt is in the past.
-    expiresAt: { type: Date, required: true, expires: 0 },
+    jti: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    expiresAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
   },
-  { timestamps: false }
+  {
+    sequelize,
+    modelName: 'RevokedToken',
+    tableName: 'revoked_tokens',
+    timestamps: false,
+  }
 );
 
-module.exports = model('RevokedToken', revokedTokenSchema);
+module.exports = RevokedToken;

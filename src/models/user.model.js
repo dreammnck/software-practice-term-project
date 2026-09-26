@@ -1,37 +1,64 @@
-const { Schema, model } = require('mongoose');
+const { DataTypes, Model } = require('sequelize');
 const bcrypt = require('bcrypt');
+const sequelize = require('../config/db');
 
-const userSchema = new Schema(
+class User extends Model {
+  async validatePassword(plainPassword) {
+    return bcrypt.compare(plainPassword, this.password);
+  }
+
+  toSafeJSON() {
+    const { id, name, telephone, email, role, createdAt, updatedAt } = this;
+    return { id, name, telephone, email, role, createdAt, updatedAt };
+  }
+}
+
+User.init(
   {
-    name: { type: String, required: true, trim: true },
-    telephone: { type: String, required: true, trim: true },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'must be a valid email'],
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
     },
-    password: { type: String, required: true },
-    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    telephone: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: { isEmail: true },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    role: {
+      type: DataTypes.ENUM('user', 'admin'),
+      allowNull: false,
+      defaultValue: 'user',
+    },
   },
-  { timestamps: true }
+  {
+    sequelize,
+    modelName: 'User',
+    tableName: 'users',
+    hooks: {
+      beforeCreate: async (user) => {
+        user.password = await bcrypt.hash(user.password, 10);
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed('password')) {
+          user.password = await bcrypt.hash(user.password, 10);
+        }
+      },
+    },
+  }
 );
 
-userSchema.pre('save', async function hashPassword(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
-});
-
-userSchema.methods.validatePassword = function validatePassword(plainPassword) {
-  return bcrypt.compare(plainPassword, this.password);
-};
-
-userSchema.methods.toSafeJSON = function toSafeJSON() {
-  const { _id, name, telephone, email, role, createdAt, updatedAt } = this;
-  return { id: _id, name, telephone, email, role, createdAt, updatedAt };
-};
-
-module.exports = model('User', userSchema);
+module.exports = User;

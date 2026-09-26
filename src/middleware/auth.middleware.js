@@ -12,12 +12,12 @@ async function authenticate(req, res, next) {
   try {
     const payload = verifyToken(token);
 
-    const revoked = await RevokedToken.findOne({ jti: payload.jti });
+    const revoked = await RevokedToken.findByPk(payload.jti);
     if (revoked) {
       return res.status(401).json({ message: 'Token has been revoked, please log in again' });
     }
 
-    const user = await User.findById(payload.sub);
+    const user = await User.findByPk(payload.sub);
     if (!user) {
       return res.status(401).json({ message: 'User no longer exists' });
     }

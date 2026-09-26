@@ -17,7 +17,7 @@ Legend: **FR/NFR** = `docs/requirements.md` IDs, **UC** = `docs/use-cases.md` ID
 | ID | User Story | Acceptance Criteria | Refs | Owner |
 |----|-------------|----------------------|------|-------|
 | US-01 | As a developer, I can run `npm install` and start the Express server locally with a documented `.env`, so both of us have an identical dev environment. | `npm start` boots the server; `.env.example` lists every required var; README documents setup. | Constraints | shared |
-| US-02 | As a developer, I have a PostgreSQL schema/migration for `users`, `restaurants`, `reservations`, `revoked_tokens`, so both verticals can build against real tables. | Migration creates all 4 tables with the columns/FKs in the ER diagram; `npm run db:migrate` is idempotent. | ER diagram (reservation-blueprint.pdf) | shared |
+| US-02 | As a developer, I have a PostgreSQL schema (Sequelize models) for `users`, `restaurants`, `reservations`, `revoked_tokens`, so both verticals can build against real tables. | Models define all 4 tables with the columns/FKs per the ER diagram; `npm run db:sync` (schema sync) is idempotent. | ER diagram (reservation-blueprint.pdf) | shared |
 | US-03 | As a developer, I have shared JWT sign/verify + bcrypt hash/compare utilities and a global error-handling middleware, so both resources use consistent auth and error responses. | `src/utils/jwt.js`, `src/utils/hash.js`, `src/middleware/error.js` exist and are unit-testable in isolation. | NFR1 | shared |
 | US-04 | As a developer, I have an empty Postman collection + environment committed, so each person adds their own requests as they build. | `postman/` folder with a collection JSON and environment JSON that imports cleanly into Postman. | NFR4 | shared |
 

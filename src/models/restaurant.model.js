@@ -1,15 +1,42 @@
-const { Schema, model } = require('mongoose');
+const { DataTypes, Model } = require('sequelize');
+const sequelize = require('../config/db');
 
-const restaurantSchema = new Schema(
+class Restaurant extends Model {}
+
+Restaurant.init(
   {
-    name: { type: String, required: true, unique: true, trim: true },
-    address: { type: String, required: true },
-    telephone: { type: String, required: true },
-    // Stored as "HH:MM" (24h) strings — Mongo has no dedicated TIME type.
-    openTime: { type: String, required: true },
-    closeTime: { type: String, required: true },
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    address: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    telephone: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    openTime: {
+      type: DataTypes.TIME,
+      allowNull: false,
+    },
+    closeTime: {
+      type: DataTypes.TIME,
+      allowNull: false,
+    },
   },
-  { timestamps: true }
+  {
+    sequelize,
+    modelName: 'Restaurant',
+    tableName: 'restaurants',
+  }
 );
 
-module.exports = model('Restaurant', restaurantSchema);
+module.exports = Restaurant;

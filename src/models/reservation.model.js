@@ -1,13 +1,38 @@
-const { Schema, model } = require('mongoose');
+const { DataTypes, Model } = require('sequelize');
+const sequelize = require('../config/db');
 
-const reservationSchema = new Schema(
+class Reservation extends Model {}
+
+Reservation.init(
   {
-    date: { type: Date, required: true },
-    numberOfTables: { type: Number, required: true, min: 1, max: 3 },
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    restaurant: { type: Schema.Types.ObjectId, ref: 'Restaurant', required: true },
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    date: {
+      type: DataTypes.DATEONLY,
+      allowNull: false,
+    },
+    numberOfTables: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: { min: 1, max: 3 },
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    restaurantId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   },
-  { timestamps: true }
+  {
+    sequelize,
+    modelName: 'Reservation',
+    tableName: 'reservations',
+  }
 );
 
-module.exports = model('Reservation', reservationSchema);
+module.exports = Reservation;

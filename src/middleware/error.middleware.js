@@ -5,20 +5,11 @@ function notFound(req, res) {
 function errorHandler(err, req, res, next) {
   console.error(err);
 
-  if (err.name === 'ValidationError' && err.errors) {
+  if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
     return res.status(400).json({
       message: 'Validation error',
-      errors: Object.values(err.errors).map((e) => e.message),
+      errors: err.errors.map((e) => e.message),
     });
-  }
-
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyPattern || {})[0] || 'field';
-    return res.status(409).json({ message: `${field} already exists` });
-  }
-
-  if (err.name === 'CastError') {
-    return res.status(404).json({ message: 'Resource not found' });
   }
 
   const status = err.status || 500;
