@@ -39,12 +39,18 @@ function authenticatedUser(passwordMatches = true) {
 }
 
 test('login verifies credentials and returns a signed JWT plus safe user', async () => {
-  const originalFindOne = User.findOne;
+  const originalScope = User.scope;
   const user = authenticatedUser();
+  let requestedScope;
   let query;
-  User.findOne = async (options) => {
-    query = options;
-    return user;
+  User.scope = (scopeName) => {
+    requestedScope = scopeName;
+    return {
+      findOne: async (options) => {
+        query = options;
+        return user;
+      },
+    };
   };
 
   const res = responseRecorder();
@@ -55,9 +61,10 @@ test('login verifies credentials and returns a signed JWT plus safe user', async
       assert.fail
     );
   } finally {
-    User.findOne = originalFindOne;
+    User.scope = originalScope;
   }
 
+  assert.equal(requestedScope, 'withPassword');
   assert.deepEqual(query, { where: { email: 'login@example.com' } });
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.message, 'Login successful');
@@ -71,8 +78,8 @@ test('login verifies credentials and returns a signed JWT plus safe user', async
 });
 
 test('login returns the same 401 response for an unknown email', async () => {
-  const originalFindOne = User.findOne;
-  User.findOne = async () => null;
+  const originalScope = User.scope;
+  User.scope = () => ({ findOne: async () => null });
 
   const res = responseRecorder();
   try {
@@ -82,7 +89,7 @@ test('login returns the same 401 response for an unknown email', async () => {
       assert.fail
     );
   } finally {
-    User.findOne = originalFindOne;
+    User.scope = originalScope;
   }
 
   assert.equal(res.statusCode, 401);
@@ -90,8 +97,8 @@ test('login returns the same 401 response for an unknown email', async () => {
 });
 
 test('login returns the same 401 response for a wrong password', async () => {
-  const originalFindOne = User.findOne;
-  User.findOne = async () => authenticatedUser(false);
+  const originalScope = User.scope;
+  User.scope = () => ({ findOne: async () => authenticatedUser(false) });
 
   const res = responseRecorder();
   try {
@@ -101,7 +108,7 @@ test('login returns the same 401 response for a wrong password', async () => {
       assert.fail
     );
   } finally {
-    User.findOne = originalFindOne;
+    User.scope = originalScope;
   }
 
   assert.equal(res.statusCode, 401);
@@ -109,11 +116,13 @@ test('login returns the same 401 response for a wrong password', async () => {
 });
 
 test('login forwards unexpected database errors to global error handling', async () => {
-  const originalFindOne = User.findOne;
+  const originalScope = User.scope;
   const databaseError = new Error('database unavailable');
-  User.findOne = async () => {
-    throw databaseError;
-  };
+  User.scope = () => ({
+    findOne: async () => {
+      throw databaseError;
+    },
+  });
 
   let forwardedError;
   try {
@@ -125,7 +134,7 @@ test('login forwards unexpected database errors to global error handling', async
       }
     );
   } finally {
-    User.findOne = originalFindOne;
+    User.scope = originalScope;
   }
 
   assert.equal(forwardedError, databaseError);

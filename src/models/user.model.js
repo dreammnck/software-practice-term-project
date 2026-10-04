@@ -11,6 +11,10 @@ class User extends Model {
     const { id, name, telephone, email, role, createdAt, updatedAt } = this;
     return { id, name, telephone, email, role, createdAt, updatedAt };
   }
+
+  toJSON() {
+    return this.toSafeJSON();
+  }
 }
 
 User.init(
@@ -48,6 +52,14 @@ User.init(
     sequelize,
     modelName: 'User',
     tableName: 'users',
+    defaultScope: {
+      attributes: { exclude: ['password'] },
+    },
+    scopes: {
+      withPassword: {
+        attributes: { include: ['password'] },
+      },
+    },
     hooks: {
       beforeCreate: async (user) => {
         user.password = await hashPassword(user.password);

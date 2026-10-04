@@ -14,6 +14,7 @@
     "test:us07": "node --test test/us07.test.js",
     "test:us08": "node --test test/us08.test.js",
     "test:us09": "node --test test/us09.test.js",
+    "test:us18": "node --test test/us18.test.js",
     "test:newman": "newman run postman/RestaurantReservation.postman_collection.json -e postman/RestaurantReservation.postman_environment.json"
   },
   "license": "ISC",

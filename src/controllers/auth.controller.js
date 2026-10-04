@@ -27,7 +27,7 @@ async function login(req, res, next) {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ where: { email } });
+    const user = await User.scope('withPassword').findOne({ where: { email } });
 
     if (!user || !(await user.validatePassword(password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
