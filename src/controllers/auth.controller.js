@@ -61,8 +61,7 @@ async function logout(req, res, next) {
 }
 
 async function me(req, res) {
-  // TODO (US-08): return req.user.toSafeJSON().
-  res.status(501).json({ message: 'Not implemented yet (US-08)' });
+  return res.status(200).json({ user: req.user.toSafeJSON() });
 }
 
 module.exports = { register, login, logout, me };
