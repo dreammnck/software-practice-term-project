@@ -1,0 +1,16 @@
+{
+  "info": {
+    "_postman_id": "f36ea451-1e71-44fa-8d45-f63a0e219a32",
+    "name": "Restaurant Reservation API",
+    "description": "Shared collection skeleton. Add requests here as each user story is implemented.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    }
+  ]
+}

@@ -67,6 +67,19 @@ Override any default (ports, credentials, JWT secret) by creating a `.env` file 
    ```
 6. API is at `http://localhost:3000/api`. Live OpenAPI docs at `http://localhost:3000/api-docs`.
 
+## Foundation checks and Postman
+
+Run the shared US-01 through US-04 checks without changing a database:
+
+```bash
+npm run test:foundation
+```
+
+Import both JSON files from `postman/` into Postman. The environment defaults `baseUrl` to
+`http://localhost:3000/api`; switch it to `http://localhost:3010/api` when using Docker.
+The collection intentionally starts empty so each vertical can add its requests as it is built.
+It can also be executed from the command line with `npm run test:newman`.
+
 Seeded admin login (change `SEED_ADMIN_*` in `.env` before seeding in a real deployment):
 - email: `admin@restaurant.com`
 - password: `Admin123!`

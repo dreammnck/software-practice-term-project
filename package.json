@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js",
     "db:sync": "node src/seeders/sync.js",
     "db:seed": "node src/seeders/seed.js",
+    "test:foundation": "node --test test/foundation.test.js",
     "test:newman": "newman run postman/RestaurantReservation.postman_collection.json -e postman/RestaurantReservation.postman_environment.json"
   },
   "license": "ISC",

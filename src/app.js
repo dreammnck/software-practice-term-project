@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const routes = require('./routes');
 const swaggerSpec = require('./config/swagger');
-const { notFound, errorHandler } = require('./middleware/error.middleware');
+const { notFound, errorHandler } = require('./middleware/error');
 
 const app = express();
 

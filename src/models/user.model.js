@@ -1,10 +1,10 @@
 const { DataTypes, Model } = require('sequelize');
-const bcrypt = require('bcrypt');
 const sequelize = require('../config/db');
+const { hashPassword, comparePassword } = require('../utils/hash');
 
 class User extends Model {
   async validatePassword(plainPassword) {
-    return bcrypt.compare(plainPassword, this.password);
+    return comparePassword(plainPassword, this.password);
   }
 
   toSafeJSON() {
@@ -50,11 +50,11 @@ User.init(
     tableName: 'users',
     hooks: {
       beforeCreate: async (user) => {
-        user.password = await bcrypt.hash(user.password, 10);
+        user.password = await hashPassword(user.password);
       },
       beforeUpdate: async (user) => {
         if (user.changed('password')) {
-          user.password = await bcrypt.hash(user.password, 10);
+          user.password = await hashPassword(user.password);
         }
       },
     },
