@@ -80,6 +80,28 @@ Import both JSON files from `postman/` into Postman. The environment defaults `b
 The collection intentionally starts empty so each vertical can add its requests as it is built.
 It can also be executed from the command line with `npm run test:newman`.
 
+## Response-time benchmark
+
+With the API running, measure one or more endpoints using the 3-second NFR threshold:
+
+```bash
+npm run benchmark:response
+```
+
+For the stricter local target and an authenticated endpoint:
+
+```bash
+PERF_TARGET_MS=150 \
+PERF_PATHS=/health,/api/auth/me \
+PERF_LOGIN_EMAIL=user@example.com \
+PERF_LOGIN_PASSWORD=your-password \
+npm run benchmark:response
+```
+
+The benchmark performs five warm-up requests followed by 30 measured requests per path and
+reports minimum, average, p50, p95, and maximum latency. See `PERFORMANCE.md` for the
+recorded baseline and methodology.
+
 Seeded admin login (change `SEED_ADMIN_*` in `.env` before seeding in a real deployment):
 - email: `admin@restaurant.com`
 - password: `Admin123!`

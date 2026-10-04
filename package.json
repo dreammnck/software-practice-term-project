@@ -15,6 +15,8 @@
     "test:us08": "node --test test/us08.test.js",
     "test:us09": "node --test test/us09.test.js",
     "test:us18": "node --test test/us18.test.js",
+    "test:us20": "node --test test/us20.test.js",
+    "benchmark:response": "node scripts/benchmark-response-time.js",
     "test:newman": "newman run postman/RestaurantReservation.postman_collection.json -e postman/RestaurantReservation.postman_environment.json"
   },
   "license": "ISC",
