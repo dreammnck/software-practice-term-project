@@ -1,7 +1,7 @@
 // Auth vertical (owner: dream) — see docs/backlog.md EPIC 1, US-05..US-10.
 // Models, JWT utils, and auth middleware are already wired up in src/models
 // and src/middleware; implement each handler against those.
-const { User } = require('../models');
+const { User, RevokedToken } = require('../models');
 const { generateToken } = require('../utils/jwt');
 
 async function register(req, res, next) {
@@ -46,8 +46,18 @@ async function login(req, res, next) {
 }
 
 async function logout(req, res, next) {
-  // TODO (US-07): revoke req.tokenPayload.jti via the RevokedToken model.
-  res.status(501).json({ message: 'Not implemented yet (US-07)' });
+  const { jti, exp } = req.tokenPayload;
+
+  try {
+    await RevokedToken.create({
+      jti,
+      expiresAt: new Date(exp * 1000),
+    });
+
+    return res.status(200).json({ message: 'Logout successful' });
+  } catch (err) {
+    return next(err);
+  }
 }
 
 async function me(req, res) {
