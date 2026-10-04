@@ -10,6 +10,7 @@
     "db:seed": "node src/seeders/seed.js",
     "test:foundation": "node --test test/foundation.test.js",
     "test:us05": "node --test test/us05.test.js",
+    "test:us06": "node --test test/us06.test.js",
     "test:newman": "newman run postman/RestaurantReservation.postman_collection.json -e postman/RestaurantReservation.postman_environment.json"
   },
   "license": "ISC",

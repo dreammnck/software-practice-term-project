@@ -63,7 +63,7 @@ router.post(
 router.post(
   '/login',
   [
-    body('email').isEmail().withMessage('a valid email is required'),
+    body('email').trim().isEmail().withMessage('a valid email is required').normalizeEmail(),
     body('password').notEmpty().withMessage('password is required'),
   ],
   validate,

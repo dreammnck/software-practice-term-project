@@ -2,6 +2,7 @@
 // Models, JWT utils, and auth middleware are already wired up in src/models
 // and src/middleware; implement each handler against those.
 const { User } = require('../models');
+const { generateToken } = require('../utils/jwt');
 
 async function register(req, res, next) {
   const { name, telephone, email, password } = req.body;
@@ -23,8 +24,25 @@ async function register(req, res, next) {
 }
 
 async function login(req, res, next) {
-  // TODO (US-06): verify credentials, issue a JWT via utils/jwt.generateToken.
-  res.status(501).json({ message: 'Not implemented yet (US-06)' });
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user || !(await user.validatePassword(password))) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const { token } = generateToken(user);
+
+    return res.status(200).json({
+      message: 'Login successful',
+      token,
+      user: user.toSafeJSON(),
+    });
+  } catch (err) {
+    return next(err);
+  }
 }
 
 async function logout(req, res, next) {
