@@ -1,29 +1,109 @@
-// Reservations vertical (owner: max) — see docs/backlog.md EPIC 2, US-12..US-16.
-// Ownership check pattern: req.user.role !== 'admin' && reservation.userId !== req.user.id.
+// Reservations vertical (owner: max) — US-12..US-16, US-19.
+// Ownership rule: a non-admin may only touch reservations where userId === req.user.id.
+const { Reservation, Restaurant } = require('../models');
+
+function isValidId(id) {
+  return /^[1-9]\d{0,9}$/.test(String(id)) && Number(id) <= 2147483647;
+}
+
+function canAccess(user, reservation) {
+  return user.role === 'admin' || reservation.userId === user.id;
+}
+
+// Loads a reservation and enforces 404 (missing) / 403 (not owner, not admin).
+// Returns the reservation, or null after having sent the error response.
+async function loadAuthorized(req, res) {
+  if (!isValidId(req.params.id)) {
+    res.status(404).json({ message: 'Reservation not found' });
+    return null;
+  }
+  const reservation = await Reservation.findByPk(req.params.id);
+  if (!reservation) {
+    res.status(404).json({ message: 'Reservation not found' });
+    return null;
+  }
+  if (!canAccess(req.user, reservation)) {
+    res.status(403).json({ message: 'Forbidden: you do not own this reservation' });
+    return null;
+  }
+  return reservation;
+}
 
 async function create(req, res, next) {
-  // TODO (US-12): verify restaurant exists, create reservation owned by req.user.id.
-  res.status(501).json({ message: 'Not implemented yet (US-12)' });
+  try {
+    const { restaurantId, date, numberOfTables } = req.body;
+    const restaurant = await Restaurant.findByPk(restaurantId);
+    if (!restaurant) {
+      return res.status(404).json({ message: 'Restaurant not found' });
+    }
+    const reservation = await Reservation.create({
+      restaurantId,
+      date,
+      numberOfTables,
+      userId: req.user.id,
+    });
+    return res.status(201).json({ message: 'Reservation created', reservation });
+  } catch (err) {
+    return next(err);
+  }
 }
 
 async function list(req, res, next) {
-  // TODO (US-13): admin sees all, user sees only their own (where userId = req.user.id).
-  res.status(501).json({ message: 'Not implemented yet (US-13)' });
+  try {
+    const where = req.user.role === 'admin' ? {} : { userId: req.user.id };
+    const reservations = await Reservation.findAll({
+      where,
+      include: [{ model: Restaurant, attributes: ['id', 'name'] }],
+      order: [['date', 'ASC'], ['id', 'ASC']],
+    });
+    return res.status(200).json({ count: reservations.length, reservations });
+  } catch (err) {
+    return next(err);
+  }
 }
 
 async function getOne(req, res, next) {
-  // TODO (US-13): 404 if missing, 403 if not owner/admin.
-  res.status(501).json({ message: 'Not implemented yet (US-13)' });
+  try {
+    const reservation = await loadAuthorized(req, res);
+    if (!reservation) return undefined;
+    return res.status(200).json({ reservation });
+  } catch (err) {
+    return next(err);
+  }
 }
 
 async function update(req, res, next) {
-  // TODO (US-14): 403 if not owner/admin, else apply and save changes.
-  res.status(501).json({ message: 'Not implemented yet (US-14)' });
+  try {
+    const reservation = await loadAuthorized(req, res);
+    if (!reservation) return undefined;
+
+    const { restaurantId, date, numberOfTables } = req.body;
+    if (restaurantId !== undefined) {
+      const restaurant = await Restaurant.findByPk(restaurantId);
+      if (!restaurant) {
+        return res.status(404).json({ message: 'Restaurant not found' });
+      }
+      reservation.restaurantId = restaurantId;
+    }
+    if (date !== undefined) reservation.date = date;
+    if (numberOfTables !== undefined) reservation.numberOfTables = numberOfTables;
+
+    await reservation.save();
+    return res.status(200).json({ message: 'Reservation updated', reservation });
+  } catch (err) {
+    return next(err);
+  }
 }
 
 async function remove(req, res, next) {
-  // TODO (US-15): 403 if not owner/admin, else destroy().
-  res.status(501).json({ message: 'Not implemented yet (US-15)' });
+  try {
+    const reservation = await loadAuthorized(req, res);
+    if (!reservation) return undefined;
+    await reservation.destroy();
+    return res.status(200).json({ message: 'Reservation deleted' });
+  } catch (err) {
+    return next(err);
+  }
 }
 
 module.exports = { create, list, getOne, update, remove };
