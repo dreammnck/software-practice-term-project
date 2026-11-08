@@ -8,7 +8,7 @@ The domain is naturally relational: `User`, `Restaurant`, and `Reservation` have
 
 Team split: **dream** (Identity & Access) and **max** (Restaurants & Reservations). See [`docs/backlog.md`](docs/backlog.md) for the full epic/user-story breakdown and issue tracker on GitHub.
 
-**Status:** foundation scaffold only. DB connection, models, JWT/bcrypt utilities, auth middleware, error handling, and route wiring are in place; every controller (`src/controllers/*.js`) is currently a `501 Not Implemented` stub with a `TODO` pointing at its backlog story (US-05..US-16) for dream/max to fill in.
+**Status:** all API endpoints implemented (auth, restaurants, reservations). Full Postman/Newman collection passes (35 requests, 54 assertions).
 
 ## Tech stack
 
@@ -77,8 +77,21 @@ npm run test:foundation
 
 Import both JSON files from `postman/` into Postman. The environment defaults `baseUrl` to
 `http://localhost:3000/api`; switch it to `http://localhost:3010/api` when using Docker.
-The collection intentionally starts empty so each vertical can add its requests as it is built.
-It can also be executed from the command line with `npm run test:newman`.
+The collection (`postman/RestaurantReservation.postman_collection.json`) covers every auth,
+restaurant, and reservation endpoint with pass/fail assertions, including the US-19 cross-user
+checks (user B reading/editing/deleting user A's reservation → 403) and admin overrides.
+It registers its own throw-away users on each run and logs in as the seeded admin
+(`adminEmail` / `adminPassword` collection variables).
+
+### Run the tests
+
+```bash
+npm run db:sync && npm run db:seed        # once, against a running Postgres
+npm start                                  # terminal 1
+npm run test:newman                        # terminal 2 — exits non-zero on any failure
+# Docker: newman run ... --env-var baseUrl=http://localhost:3010/api
+npm test                                   # node unit tests (no DB needed)
+```
 
 ## Response-time benchmark
 
@@ -122,14 +135,24 @@ Seeded admin login (change `SEED_ADMIN_*` in `.env` before seeding in a real dep
 | PUT | /api/reservations/:id | owner/admin | Update a reservation |
 | DELETE | /api/reservations/:id | owner/admin | Delete a reservation |
 
-## Team split
+## Deployment
+
+Public base URL: **TODO — not deployed yet (US-22).** Deploy the Docker image (e.g. Render/Railway/Fly.io
+with a managed Postgres), set the env vars from `.env.example`, run `npm run db:sync && npm run db:seed`,
+then record the URL here and smoke-test with `curl <url>/health` (expects `{"status":"ok"}`) and
+`newman run ... --env-var baseUrl=<url>/api`.
+
+## Division of work
 
 See [`docs/backlog.md`](docs/backlog.md) for the full epic/user-story breakdown and GitHub issue tracker.
 
-| Member | Owns |
-|---|---|
-| dream | Identity & Access: register/login/logout/me, auth middleware, token revocation |
-| max | Restaurants & Reservations: browse, create/view/edit/delete, admin override |
+| Member | Stories | Files |
+|---|---|---|
+| dream (Identity & Access) | US-05–US-10, US-18 | `src/controllers/auth.controller.js`, `src/routes/auth.routes.js`, `src/middleware/auth.middleware.js`, `src/models/user.model.js`, `src/models/revokedToken.model.js`, `src/utils/{jwt,hash}.js`, `test/us05–us09,us18` |
+| max (Restaurants & Reservations) | US-11–US-17, US-19 | `src/controllers/restaurant.controller.js`, `src/controllers/reservation.controller.js`, `src/routes/{restaurant,reservation}.routes.js`, `test/us11-16.test.js`, reservation/restaurant + cross-user requests in `postman/` |
+| Shared | US-01–US-04, US-20–US-25 | scaffold/models/Docker, `scripts/benchmark-response-time.js`, `PERFORMANCE.md`, README, `postman/` collection, `docs/demo-rehearsal.md` |
+
+Demo run-sheet (7 min + 3 min Q&A): [`docs/demo-rehearsal.md`](docs/demo-rehearsal.md).
 
 ## Links
 
