@@ -8,7 +8,7 @@ The domain is naturally relational: `User`, `Restaurant`, and `Reservation` have
 
 Team split: **dream** (Identity & Access) and **max** (Restaurants & Reservations). See [`docs/backlog.md`](docs/backlog.md) for the full epic/user-story breakdown and issue tracker on GitHub.
 
-**Status:** all API endpoints implemented (auth, restaurants, reservations). Full Postman/Newman collection passes (35 requests, 54 assertions).
+**Status:** all API endpoints implemented (auth, restaurants, reservations). Full Postman/Newman collection passes (36 requests, 56 assertions).
 
 ## Tech stack
 
@@ -49,7 +49,7 @@ Override any default (ports, credentials, JWT secret) by creating a `.env` file 
    ```bash
    createdb restaurant_reservation
    ```
-2. Copy `.env.example` to `.env` and fill in your DB credentials and a JWT secret.
+2. Copy `.env.example` to `.env` and fill in your DB credentials and a JWT secret. Without a `.env`, `db:sync` fails with `database "<your user>" does not exist`. If you use the Docker Postgres from the host instead of a local one, set `DB_PORT=5433`.
 3. Install dependencies:
    ```bash
    npm install
@@ -129,10 +129,10 @@ Seeded admin login (change `SEED_ADMIN_*` in `.env` before seeding in a real dep
 | GET | /api/auth/me | user/admin | Current user profile |
 | GET | /api/restaurants | user/admin | List restaurants |
 | GET | /api/restaurants/:id | user/admin | Get one restaurant |
-| POST | /api/reservations | user | Create a reservation (1–3 tables) |
+| POST | /api/reservations | user | Create a reservation (1–3 tables; a user may hold at most 3 tables in total, otherwise 409) |
 | GET | /api/reservations | user/admin | List own (user) / all (admin) reservations |
 | GET | /api/reservations/:id | owner/admin | Get one reservation |
-| PUT | /api/reservations/:id | owner/admin | Update a reservation |
+| PUT | /api/reservations/:id | owner/admin | Update a reservation (409 if the owner would exceed 3 tables in total) |
 | DELETE | /api/reservations/:id | owner/admin | Delete a reservation |
 
 ## Deployment
