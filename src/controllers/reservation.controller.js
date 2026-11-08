@@ -1,9 +1,27 @@
 // Reservations vertical (owner: max) — US-12..US-16, US-19.
 // Ownership rule: a non-admin may only touch reservations where userId === req.user.id.
+const { Op } = require('sequelize');
 const { Reservation, Restaurant } = require('../models');
 
 function isValidId(id) {
   return /^[1-9]\d{0,9}$/.test(String(id)) && Number(id) <= 2147483647;
+}
+
+const MAX_TABLES_PER_USER = 3;
+
+// Requirement: a user may reserve up to 3 tables in total. Returns the number of
+// additional tables the user can still reserve (excluding one reservation being edited).
+async function remainingTables(userId, excludeId) {
+  const where = { userId };
+  if (excludeId) where.id = { [Op.ne]: excludeId };
+  const used = (await Reservation.sum('numberOfTables', { where })) || 0;
+  return MAX_TABLES_PER_USER - used;
+}
+
+function limitExceeded(res, remaining) {
+  return res.status(409).json({
+    message: `Reservation limit exceeded: a user may reserve up to ${MAX_TABLES_PER_USER} tables in total (${Math.max(remaining, 0)} remaining)`,
+  });
 }
 
 function canAccess(user, reservation) {
@@ -36,6 +54,8 @@ async function create(req, res, next) {
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
+    const remaining = await remainingTables(req.user.id);
+    if (numberOfTables > remaining) return limitExceeded(res, remaining);
     const reservation = await Reservation.create({
       restaurantId,
       date,
@@ -86,7 +106,11 @@ async function update(req, res, next) {
       reservation.restaurantId = restaurantId;
     }
     if (date !== undefined) reservation.date = date;
-    if (numberOfTables !== undefined) reservation.numberOfTables = numberOfTables;
+    if (numberOfTables !== undefined) {
+      const remaining = await remainingTables(reservation.userId, reservation.id);
+      if (numberOfTables > remaining) return limitExceeded(res, remaining);
+      reservation.numberOfTables = numberOfTables;
+    }
 
     await reservation.save();
     return res.status(200).json({ message: 'Reservation updated', reservation });

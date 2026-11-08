@@ -21,12 +21,14 @@ const admin = { id: 3, role: 'admin' };
 function stubs(fn) {
   const orig = {
     rFind: Restaurant.findByPk, resFind: Reservation.findByPk,
-    resAll: Reservation.findAll, resCreate: Reservation.create,
+    resAll: Reservation.findAll, resCreate: Reservation.create, resSum: Reservation.sum,
   };
+  Reservation.sum = async () => 0;
   return async () => {
     try { await fn(); } finally {
       Restaurant.findByPk = orig.rFind; Reservation.findByPk = orig.resFind;
       Reservation.findAll = orig.resAll; Reservation.create = orig.resCreate;
+      Reservation.sum = orig.resSum;
     }
   };
 }
@@ -108,4 +110,41 @@ test('missing reservation → 404', stubs(async () => {
   const r = res();
   await reservationController.getOne({ user: owner, params: { id: '10' } }, r);
   assert.equal(r.statusCode, 404);
+}));
+
+test('Req 3: a user may reserve at most 3 tables in total (create)', stubs(async () => {
+  Restaurant.findByPk = async () => ({ id: 1 });
+  let createdCount = 0;
+  Reservation.create = async (v) => { createdCount += 1; return { id: 1, ...v }; };
+  const body = { restaurantId: 1, date: '2030-01-01', numberOfTables: 2 };
+
+  Reservation.sum = async () => 1; // 1 used, 2 more fits exactly
+  const ok = res();
+  await reservationController.create({ user: owner, body }, ok);
+  assert.equal(ok.statusCode, 201);
+
+  Reservation.sum = async () => 2; // 2 used, 2 more would be 4
+  const over = res();
+  await reservationController.create({ user: owner, body }, over);
+  assert.equal(over.statusCode, 409);
+  assert.equal(createdCount, 1);
+}));
+
+test('Req 3: update cannot push the owner above 3 tables; admin edit counts the owner', stubs(async () => {
+  Reservation.sum = async () => 2; // other reservations of the owner
+  const r = fakeReservation(1);
+  Reservation.findByPk = async () => r;
+  const over = res();
+  await reservationController.update({ user: owner, params: { id: '10' }, body: { numberOfTables: 2 } }, over);
+  assert.equal(over.statusCode, 409);
+  assert.equal(r.saved, false);
+
+  const adminOver = res();
+  await reservationController.update({ user: admin, params: { id: '10' }, body: { numberOfTables: 2 } }, adminOver);
+  assert.equal(adminOver.statusCode, 409);
+
+  const ok = res();
+  await reservationController.update({ user: owner, params: { id: '10' }, body: { numberOfTables: 1 } }, ok);
+  assert.equal(ok.statusCode, 200);
+  assert.equal(r.saved, true);
 }));
