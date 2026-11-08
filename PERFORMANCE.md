@@ -15,7 +15,18 @@ followed by 30 sequential measured requests.
 | `GET /health` | Express, security middleware, JSON response | 30 | 0.40 ms | 0.84 ms | 0.69 ms | 1.67 ms | 2.16 ms |
 | `GET /api/auth/me` | JWT verification, revocation lookup, user lookup, serialization | 30 | 1.11 ms | 1.64 ms | 1.48 ms | 3.12 ms | 4.09 ms |
 
-The slowest observed request was **4.09 ms**, comfortably below both the 150 ms local target
+DB-backed restaurant and reservation endpoints, measured the same way on 2026-11-06 (admin
+token, seeded database, `PERF_TARGET_MS=150`):
+
+| Path | Samples | Min | Average | p50 | p95 | Max |
+|---|---:|---:|---:|---:|---:|---:|
+| `GET /api/restaurants` | 30 | 1.44 ms | 1.69 ms | 1.59 ms | 2.21 ms | 2.35 ms |
+| `GET /api/restaurants/1` | 30 | 1.21 ms | 1.79 ms | 1.49 ms | 3.34 ms | 3.78 ms |
+| `GET /api/reservations` | 30 | 1.23 ms | 4.06 ms | 3.16 ms | 18.11 ms | 19.31 ms |
+
+The full Newman run (35 requests, 54 assertions) averaged 22 ms per request, max 165 ms
+(first request, includes bcrypt). The slowest observed benchmark request was **19.31 ms**
+(`GET /api/reservations`), comfortably below both the 150 ms local target
 and the 3,000 ms requirement.
 
 ## Database support
@@ -47,5 +58,4 @@ Configuration:
 - `PERF_BEARER_TOKEN` can be supplied instead of benchmark login credentials.
 
 The command exits non-zero if a request fails or any measured maximum reaches the configured
-target. Re-run the benchmark after implementing the remaining restaurant and reservation
-endpoints and append those DB-backed paths to the recorded baseline.
+target.
